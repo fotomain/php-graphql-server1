@@ -56,7 +56,6 @@ $queryType = new ObjectType([
                     $idMap[$r['owner']] = $r;
                 }
 //                echo json_encode($idMap);
-
                 return json_encode($idMap);
 //              return 'Hello world!';
             },
