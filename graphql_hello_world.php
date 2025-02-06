@@ -1,5 +1,10 @@
 <?php
 
+//=== test
+//{
+//    query:echo
+//}
+
 declare(strict_types=1);
 
 require_once __DIR__ . '/vendor/autoload.php';
