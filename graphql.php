@@ -16,9 +16,7 @@ use GraphQL\GraphQL;
 use GraphQL\Utils\BuildSchema;
 
 try {
-
     //step1 mult(x: Int!, y: Int!): Int!,
-
     $schema = BuildSchema::build(/** @lang GraphQL */ '
     type Query {
       echo(message: String!): String!

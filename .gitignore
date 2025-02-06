@@ -3,5 +3,5 @@
 composer.lock
 composer.phar
 phpstan.neon
-vendor
 .idea
+/vendor/
