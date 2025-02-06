@@ -1,86 +1,66 @@
 <?php declare(strict_types=1);
-
-// Run local test server
-// php graphql.php
-
-// Try query
-// curl --data '{"query": "query { echo(message: \"Hello World\") }" }' --header "Content-Type: application/json" http://localhost:8080
-
-// Try mutation
-// curl --data '{"query": "mutation { sum(x: 2, y: 2) }" }' --header "Content-Type: application/json" http://localhost:8080
-
+//=== DOC https://docs.google.com/document/d/1G8oSp_NZRSHVCqnbWvzmwIis3WWTBqDg5Di-urZmNcM/edit?tab=t.0
+//=== test 1
+//{
+//    query:echo(message: "Hello World")
+//}
+//
+//=== test 2 !!! no {   }
+//
+//mutation {sum(x: 2, y:12)}
+//
+//
 require_once __DIR__ . '/vendor/autoload.php';
 
-use GraphQL\Executor\ExecutionResult;
-use GraphQL\Executor\Promise\Adapter\ReactPromiseAdapter;
 use GraphQL\GraphQL;
-use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Schema;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Http\HttpServer;
-use React\Http\Message\Response;
-use React\Socket\SocketServer;
+use GraphQL\Utils\BuildSchema;
 
-$queryType = new ObjectType([
-    'name' => 'Query',
-    'fields' => [
-        'echo' => [
-            'type' => Type::string(),
-            'args' => [
-                'message' => ['type' => Type::string()],
-            ],
-            'resolve' => function ($rootValue, array $args) {
-                $deferred = new \React\Promise\Deferred();
-                $promise = $deferred->promise();
-                $promise = $promise = $promise->then(static fn (): string => $rootValue['prefix'] . $args['message']);
-                $deferred->resolve(null);
+try {
 
-                return $promise;
-            },
-        ],
-    ],
-]);
-$mutationType = new ObjectType([
-    'name' => 'Mutation',
-    'fields' => [
-        'sum' => [
-            'type' => Type::int(),
-            'args' => [
-                'x' => ['type' => Type::int()],
-                'y' => ['type' => Type::int()],
-            ],
-            'resolve' => static fn ($calc, array $args): int => $args['x'] + $args['y'],
-        ],
-    ],
-]);
-// See docs on schema options:
-// https://webonyx.github.io/graphql-php/schema-definition/#configuration-options
-$schema = new Schema([
-    'query' => $queryType,
-    'mutation' => $mutationType,
-]);
+    //step1 mult(x: Int!, y: Int!): Int!,
 
-$react = new ReactPromiseAdapter();
-$server = new HttpServer(function (ServerRequestInterface $request) use ($schema, $react) {
-    $rawInput = $request->getBody()->__toString();
+    $schema = BuildSchema::build(/** @lang GraphQL */ '
+    type Query {
+      echo(message: String!): String!
+    }
+    
+    type Mutation {
+      sum(x: Int!, y: Int!): Int!,
+      mult(x: Int!, y: Int!): Int!, 
+    }      
+    
+    ');
+    $rootValue = [
+        'echo' => static function (array $rootValue, array $args): string {
+            return $rootValue['prefix'] . $args['message'];
+        },
+        'sum' => static function (array $rootValue, array $args): int {
+            return $args['x'] + $args['y'];
+        },
+        //step2
+        'mult' => static function (array $rootValue, array $args): int {
+            return $args['x'] * $args['y'];
+        },
+        'prefix' => 'You said: ',
+    ];
+
+    $rawInput = file_get_contents('php://input');
+    if ($rawInput === false) {
+        throw new RuntimeException('Failed to get php://input');
+    }
 
     $input = json_decode($rawInput, true);
     $query = $input['query'];
     $variableValues = $input['variables'] ?? null;
 
-    $rootValue = ['prefix' => 'You said: '];
+    $result = GraphQL::executeQuery($schema, $query, $rootValue, null, $variableValues);
+} catch (Throwable $e) {
+    $result = [
+        'error' => [
+            'message' => $e->getMessage(),
+        ],
+    ];
+}
 
-    return GraphQL::promiseToExecute($react, $schema, $query, $rootValue, null, $variableValues)
-        ->then(fn (ExecutionResult $result): Response => new Response(
-            200,
-            [
-                'Content-Type' => 'application/json',
-            ],
-            json_encode($result->toArray(), JSON_THROW_ON_ERROR)
-        ));
-});
-
-$socket = new SocketServer('127.0.0.1:8080');
-$server->listen($socket);
-echo 'Listening on ' . str_replace('tcp:', 'http:', $socket->getAddress() ?? '') . PHP_EOL;
+header('Content-Type: application/json; charset=UTF-8');
+echo json_encode($result, JSON_THROW_ON_ERROR);

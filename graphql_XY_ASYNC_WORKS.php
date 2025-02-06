@@ -52,6 +52,14 @@ $mutationType = new ObjectType([
             ],
             'resolve' => static fn ($calc, array $args): int => $args['x'] + $args['y'],
         ],
+        'mult' => [
+            'type' => Type::int(),
+            'args' => [
+                'x' => ['type' => Type::int()],
+                'y' => ['type' => Type::int()],
+            ],
+            'resolve' => static fn ($calc, array $args): int => $args['x'] * $args['y'],
+        ],
     ],
 ]);
 // See docs on schema options:
