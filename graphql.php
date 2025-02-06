@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 //=== DOC https://github.com/webonyx/graphql-php/tree/master/examples/01-blog
 //=== DOC https://docs.google.com/document/d/1G8oSp_NZRSHVCqnbWvzmwIis3WWTBqDg5Di-urZmNcM/edit?tab=t.0
 //=== test 1
