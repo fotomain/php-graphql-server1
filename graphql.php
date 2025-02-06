@@ -9,7 +9,7 @@
 //
 //mutation {sum(x: 2, y:12)}
 //
-//
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 use GraphQL\GraphQL;
